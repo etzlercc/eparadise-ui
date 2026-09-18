@@ -1,35 +1,59 @@
-# eparadise-ui
-Odoo ROS UI Manager Addon - Integração de robótica e gestão empresarial.
+# eParadise UI (EPUI)
 
-# eParadise UI (EPUI) - Odoo ROS UI Manager Addon
+Addon Odoo para integração de robôs, ROS 2 e hardware embarcado.
 
 > "A evolução da Integração de Robôs, Internet das Coisas (IoT) e Gestão Organizacional para um futuro abundante."
 
-O **eParadise UI (EPUI)** é um projeto pioneiro e de impacto social que une o poder de gestão do **Odoo (ERP)** com a flexibilidade do **ROS (Robot Operating System)** e o universo do hardware embarcado (**IoT/Edge Computing**). 
+O **eParadise UI (EPUI)** une o Odoo, o ROS 2 e controladoras embarcadas para centralizar cadastro de robôs, execução de tarefas, telemetria e integração com processos empresariais.
 
-Nosso objetivo é criar uma interface de usuário (UI) revolucionária e centralizada para monitoramento, telemetria e controle remoto de frotas de robôs e dispositivos conectados, transformando dados técnicos em indicadores organizacionais em tempo real.
+O projeto mantém as regras de negócio no Odoo, a execução robótica em um gateway ROS 2 e o controle de baixo nível na UDOO KEY Pro. Essa separação permite desenvolver a interface no BIGLinux sem transformar a placa embarcada em um servidor empresarial.
 
-Inspirado na visão de John Adolphus Etzler (1836), este projeto busca democratizar o acesso à tecnologia avançada, permitindo a criação de comunidades autossustentáveis onde humanos, robôs e automação colaboram em perfeita harmonia.
-
----
-
-## 🛠️ Arquitetura e Hardwares Suportados
-
-O ecossistema do eParadise UI foi projetado para ser agnóstico e modular, integrando desde microrcontroladores de baixo custo até computadores de placa única (SBCs) industriais:
-
-* 🐧 **Sistema Operacional Base:** Otimizado e homologado para rodar sobre o **Ubuntu Linux** (ambiente nativo para ROS e servidores Odoo).
-* 🧠 **Edge Computing de Alto Desempenho:** Suporte a placas como **UDOO x86**, combinando o poder de processamento de arquitetura PC com sensores embarcados.
-* 🤖 **SBCs e Gateways:** Integração com **Raspberry Pi** atuando como nós de computação móvel nos robôs ou hubs de automação local.
-* 🔌 **Internet das Coisas (IoT) & Sensores:** Coleta de dados periféricos e acionamentos através de microcontroladores **ESP32**, comunicando via protocolos leves (como MQTT ou WebSockets) diretamente com o Odoo/ROS.
+Para a arquitetura completa, consulte [`docs/architecture.md`](docs/architecture.md).
 
 ---
 
-## 🚀 Funcionalidades Planejadas
+## Arquitetura atual
 
-* 📊 **Painel de Controle Centralizado:** Monitoramento do status operacional e localização de robôs e dispositivos IoT diretamente do backend do Odoo.
-* 🔄 **Ponte de Comunicação Bidirecional:** Integração nativa (ex: via `rosbridge_suite`) para que comandos do Odoo alterem estados no ROS e vice-versa.
-* 📉 **Telemetria de Sensores em Tempo Real:** Gráficos e dashboards atualizados com dados vindos de ESP32, Raspberry Pi e sensores industriais.
-* 🔋 **Gestão de Ativos e Frotas:** Rastreamento do desgaste de hardware, nível de bateria dos robôs e agendamento de manutenções preventivas integradas ao módulo de Manutenção do Odoo.
+O ambiente de desenvolvimento usa o BIGLinux como sistema hospedeiro. O VS Code e o Odoo ficam no Desktop, enquanto uma VM Ubuntu 24.04 executa o ROS 2 Jazzy. A UDOO KEY Pro atua como controladora embarcada, e não como host Linux do ROS:
+
+```text
+BIGLinux no ASUS X571GT
+├── VS Code e Odoo/PostgreSQL
+└── VM Ubuntu 24.04
+	├── ROS 2 Jazzy
+	├── gateway HTTP eparadise_ros
+	└── rosbridge_suite (opcional para clientes WebSocket)
+			|
+			| Wi-Fi, Ethernet, MQTT ou serial
+			v
+		UDOO KEY Pro
+		├── ESP32: conectividade, IMU e microfone
+		└── RP2040: GPIO e controle de baixo nível
+```
+
+O VS Code permanece no BIGLinux e acessa o workspace ROS pela extensão Remote - SSH. O modo bridge da VM é recomendado para que o gateway HTTP tenha um IP alcançável pela UDOO e pelo Odoo.
+
+---
+
+## Funcionalidades
+
+* **Robôs:** cadastro de status, bateria, localização, último contato e tópico ROS.
+* **Tarefas:** associação de `ep.task` a `ep.robot`, fila, prioridade, progresso, resultado e cancelamento.
+* **Gateway:** envio HTTP para o gateway ROS 2 hospedado na VM Ubuntu.
+* **Hardware:** integração prevista com ESP32 e RP2040 da UDOO KEY Pro.
+* **Evolução planejada:** telemetria, alertas, autenticação, logs e integração com módulos Odoo.
+
+## Ambiente de desenvolvimento
+
+1. Execute BIGLinux no ASUS X571GT como host.
+2. Reserve 4 vCPUs e 8 GB de RAM para uma VM Ubuntu 24.04.
+3. Instale ROS 2 Jazzy e o gateway HTTP `eparadise_ros` na VM.
+4. Use rede bridge e descubra o IP da VM, por exemplo `192.168.1.50`.
+5. Crie `deployment/.env` com `EP_ROS_ENDPOINT=http://192.168.1.50:8080`.
+6. Inicie Odoo e PostgreSQL com `docker compose -f deployment/docker-compose.yml up -d`.
+7. Para desenvolvimento ROS, abra o workspace da VM no VS Code pela extensão Remote - SSH.
+
+O parâmetro de sistema Odoo `eparadise_ui.ros_endpoint`, quando configurado, tem prioridade sobre `EP_ROS_ENDPOINT`.
 
 ---
 
@@ -38,12 +62,25 @@ O ecossistema do eParadise UI foi projetado para ser agnóstico e modular, integ
 ```text
 eparadise-ui/
 │
-├── eparadise_ui/                 # Addon Nativo do Odoo (Módulo Python/JS)
-│   ├── models/                   # Modelagem de Robôs, Dispositivos IoT e Sensores
-│   ├── views/                    # Views XML e Dashboards Web do Odoo
-│   └── static/src/               # JavaScript para conexões em Tempo Real (WebSockets)
+├── docs/                         # Arquitetura, contratos e implantação
+├── eparadise_ui/                 # Addon Odoo Python/XML/JavaScript
+│   ├── models/                   # Robôs, tarefas e cliente do gateway ROS
+│   ├── views/                    # Views de robôs e tarefas
+│   └── static/src/               # Recursos JavaScript do backend Odoo
 │
 ├── firmware_esp32/               # Códigos fonte para microcontroladores ESP32 (IoT)
 ├── ros_nodes/                    # Nós e pacotes ROS customizados para comunicação
-├── deployment/                   # Scripts de instalação e guias para Ubuntu/Raspberry/UDOO
+├── deployment/                   # Compose e configurações do ambiente no BIGLinux
 └── README.md
+```
+
+## Validação local
+
+```bash
+python3 -m py_compile eparadise_ui/models/*.py
+python3 -c "import xml.etree.ElementTree as ET; ET.parse('eparadise_ui/views/robot_views.xml'); ET.parse('eparadise_ui/views/task_views.xml')"
+node --check eparadise_ui/static/src/js/robot_dashboard.js
+docker compose -f deployment/docker-compose.yml config
+```
+
+Esses comandos verificam sintaxe e configuração. Testes de instalação do módulo e testes de integração dependem de uma instância Odoo e de um gateway ROS 2 ativos.

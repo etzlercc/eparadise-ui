@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="action_ep_robot" model="ir.actions.act_window">
+        <field name="name">Robôs</field>
+        <field name="res_model">ep.robot</field>
+        <field name="view_mode">tree,form</field> <!-- Lista primeiro; formulário abre ao selecionar um robô. -->
+        <field name="help">Gerencie robôs, envie comandos e monitore o status.</field>
+    </record>
+
+    <menuitem id="menu_ep_root" name="eParadise" sequence="10"/> <!-- Menu raiz do addon. -->
+    <menuitem id="menu_ep_robot" name="Robôs" parent="menu_ep_root" action="action_ep_robot" sequence="10"/>
+
+    <record id="view_ep_robot_tree" model="ir.ui.view">
+        <field name="name">ep.robot.tree</field>
+        <field name="model">ep.robot</field>
+        <field name="arch" type="xml">
+            <tree string="Robôs">
+                <field name="name"/> <!-- Colunas essenciais para acompanhar a frota rapidamente. -->
+                <field name="status"/>
+                <field name="battery_level"/>
+                <field name="location"/>
+                <field name="last_seen"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ep_robot_form" model="ir.ui.view">
+        <field name="name">ep.robot.form</field>
+        <field name="model">ep.robot</field>
+        <field name="arch" type="xml">
+            <form string="Robô">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="description"/>
+                    </group>
+                    <group>
+                        <field name="status"/>
+                        <field name="battery_level"/>
+                        <field name="location"/>
+                        <field name="last_seen"/>
+                        <field name="ros_topic"/>
+                    </group>
+                    <footer> <!-- Ação explícita para evitar comandos ROS acidentais. -->
+                        <button name="action_send_command" string="Enviar comando ROS" type="object" class="btn-primary"/>
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

@@ -52,7 +52,7 @@ devel/
 *.bag
 
 # ------------------------------------------------------------------------------
-# 4. Sistemas Embarcados & IoT (ESP32, Raspberry Pi, UDOO x86)
+# 4. Sistemas Embarcados & IoT (ESP32, UDOO KEY Pro)
 # ------------------------------------------------------------------------------
 # PlatformIO (Gerenciador recomendado para ESP32)
 .pio/
@@ -66,7 +66,7 @@ devel/
 *.ino.with_bootloader.bin
 *.ino.partitions.bin
 
-# Arquivos de sistema específicos de SBCs (Ubuntu / Raspberry Pi OS)
+# Arquivos de sistema específicos da VM ROS 2 e da UDOO KEY Pro
 .DS_Store
 Thumbs.db
 *~

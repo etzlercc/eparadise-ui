@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- A tarefa pertence ao Odoo; o gateway ROS 2 apenas executa o comando. -->
+    <record id="action_ep_task" model="ir.actions.act_window">
+        <field name="name">Tarefas</field>
+        <field name="res_model">ep.task</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help">Crie tarefas, associe-as a robôs e envie comandos ao gateway ROS 2.</field>
+    </record>
+
+    <menuitem id="menu_ep_task" name="Tarefas" parent="menu_ep_root" action="action_ep_task" sequence="20"/>
+
+    <record id="view_ep_task_tree" model="ir.ui.view">
+        <field name="name">ep.task.tree</field>
+        <field name="model">ep.task</field>
+        <field name="arch" type="xml">
+            <tree string="Tarefas">
+                <field name="name"/>
+                <field name="robot_id"/>
+                <field name="state"/>
+                <field name="priority" widget="priority"/>
+                <field name="progress"/>
+                <field name="create_date"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ep_task_form" model="ir.ui.view">
+        <field name="name">ep.task.form</field>
+        <field name="model">ep.task</field>
+        <field name="arch" type="xml">
+            <form string="Tarefa de robô">
+                <header>
+                    <button name="action_queue" string="Colocar na fila" type="object" class="btn-secondary" states="draft"/>
+                    <button name="action_send_command" string="Enviar ao ROS 2" type="object" class="btn-primary" states="draft,queued"/>
+                    <button name="action_cancel" string="Cancelar" type="object" class="btn-secondary" states="queued,running"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,queued,running,done,failed"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="robot_id"/>
+                        <field name="priority" widget="priority"/>
+                        <field name="command" placeholder="ex.: navigate_to"/>
+                    </group>
+                    <group>
+                        <field name="progress"/>
+                        <field name="started_at"/>
+                        <field name="completed_at"/>
+                    </group>
+                    <field name="description"/>
+                    <field name="result_message" readonly="1"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

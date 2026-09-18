@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ep_robot_user,access.ep.robot.user,model_ep_robot,base.group_user,1,1,1,1
+access_ep_task_user,access.ep.task.user,model_ep_task,base.group_user,1,1,1,1

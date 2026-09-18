@@ -1,0 +1,32 @@
+# O Compose hospeda Odoo/PostgreSQL no BIGLinux; o ROS 2 roda na VM Ubuntu.
+services:
+  db:
+    image: postgres:15 # Banco suportado pelo ambiente de desenvolvimento do Odoo.
+    environment:
+      POSTGRES_DB: odoo
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+
+  web:
+    image: odoo:16.0 # Odoo fica separado do ROS para facilitar atualizações e isolamento.
+    depends_on:
+      - db
+    ports:
+      - '8069:8069'
+    volumes:
+      - ./eparadise_ui:/mnt/extra-addons/eparadise_ui
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8069
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=odoo
+      - DB_PASSWORD=odoo
+      # O Odoo usa esta variável quando o parâmetro do sistema ainda não foi definido.
+      - EP_ROS_ENDPOINT=${EP_ROS_ENDPOINT:-http://192.168.122.100:8080}
+volumes:
+  db_data:
