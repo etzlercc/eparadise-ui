@@ -14,24 +14,31 @@ Para a arquitetura completa, consulte [`docs/architecture.md`](docs/architecture
 
 ## Arquitetura atual
 
-O ambiente de desenvolvimento usa o BIGLinux como sistema hospedeiro. O VS Code e o Odoo ficam no Desktop, enquanto uma VM Ubuntu 24.04 executa o ROS 2 Jazzy. A UDOO KEY Pro atua como controladora embarcada, e não como host Linux do ROS:
+A arquitetura atual separa funções por máquina. A máquina ROS concentra o desenvolvimento e o ambiente de robótica; a máquina Odoo fica responsável pelo backend empresarial. A UDOO KEY Pro atua como controladora embarcada e não como host Linux do ROS:
 
 ```text
-BIGLinux no ASUS X571GT
-├── VS Code e Odoo/PostgreSQL
-└── VM Ubuntu 24.04
-	├── ROS 2 Jazzy
-	├── gateway HTTP eparadise_ros
-	└── rosbridge_suite (opcional para clientes WebSocket)
-			|
-			| Wi-Fi, Ethernet, MQTT ou serial
-			v
-		UDOO KEY Pro
-		├── ESP32: conectividade, IMU e microfone
-		└── RP2040: GPIO e controle de baixo nível
+Máquina Odoo
+├── Odoo 16
+├── PostgreSQL 15
+├── backend empresarial
+└── gestão de usuários e tarefas
+
+Máquina ROS
+├── Ubuntu 24.04
+├── VS Code
+├── ROS 2 Jazzy
+├── gateway HTTP eparadise_ros
+├── rosbridge_suite (opcional para clientes WebSocket)
+└── ferramentas de simulação e depuração
+        |
+        | Wi-Fi, Ethernet, MQTT ou serial
+        v
+    UDOO KEY Pro
+    ├── ESP32: conectividade, IMU e microfone
+    └── RP2040: GPIO e controle de baixo nível
 ```
 
-O VS Code permanece no BIGLinux e acessa o workspace ROS pela extensão Remote - SSH. O modo bridge da VM é recomendado para que o gateway HTTP tenha um IP alcançável pela UDOO e pelo Odoo.
+O VS Code permanece na máquina ROS e acessa o workspace do projeto em Ubuntu. O gateway HTTP deve ficar acessível na rede para a UDOO e para a máquina Odoo.
 
 ---
 
@@ -39,19 +46,35 @@ O VS Code permanece no BIGLinux e acessa o workspace ROS pela extensão Remote -
 
 * **Robôs:** cadastro de status, bateria, localização, último contato e tópico ROS.
 * **Tarefas:** associação de `ep.task` a `ep.robot`, fila, prioridade, progresso, resultado e cancelamento.
-* **Gateway:** envio HTTP para o gateway ROS 2 hospedado na VM Ubuntu.
+* **Gateway:** envio HTTP para o gateway ROS 2 hospedado na máquina ROS.
 * **Hardware:** integração prevista com ESP32 e RP2040 da UDOO KEY Pro.
 * **Evolução planejada:** telemetria, alertas, autenticação, logs e integração com módulos Odoo.
 
 ## Ambiente de desenvolvimento
 
-1. Execute BIGLinux no ASUS X571GT como host.
-2. Reserve 4 vCPUs e 8 GB de RAM para uma VM Ubuntu 24.04.
-3. Instale ROS 2 Jazzy e o gateway HTTP `eparadise_ros` na VM.
-4. Use rede bridge e descubra o IP da VM, por exemplo `192.168.1.50`.
-5. Crie `deployment/.env` com `EP_ROS_ENDPOINT=http://192.168.1.50:8080`.
-6. Inicie Odoo e PostgreSQL com `docker compose -f deployment/docker-compose.yml up -d`.
-7. Para desenvolvimento ROS, abra o workspace da VM no VS Code pela extensão Remote - SSH.
+### Máquina Odoo
+
+- Host para o backend empresarial.
+- Sem necessidade de GPU dedicada.
+- Deve rodar Odoo 16 e PostgreSQL em Docker.
+- Deve se conectar ao gateway ROS na máquina ROS.
+
+### Máquina ROS
+
+- Host para Ubuntu 24.04, VS Code e ROS 2 Jazzy.
+- Deve reunir desenvolvimento, simulação, depuração e ferramentas ROS.
+- Deve ter melhor CPU/GPU para RViz e análise de robótica.
+- Deve hospedar o gateway HTTP `eparadise_ros` e, opcionalmente, `rosbridge_suite`.
+
+### Passo a passo
+
+1. Prepare a máquina Odoo com Docker e Docker Compose.
+2. Prepare a máquina ROS com Ubuntu 24.04, VS Code e ROS 2 Jazzy.
+3. Instale o gateway HTTP `eparadise_ros` na máquina ROS.
+4. Configure a rede para que a máquina Odoo consiga alcançar a máquina ROS, por exemplo `http://IP_DA_MAQUINA_ROS:8080`.
+5. Crie `deployment/.env` na máquina Odoo com `EP_ROS_ENDPOINT=http://IP_DA_MAQUINA_ROS:8080`.
+6. Inicie Odoo e PostgreSQL na máquina Odoo com `docker compose -f deployment/docker-compose.yml up -d`.
+7. Para desenvolvimento ROS, abra o workspace diretamente na máquina ROS ou via Remote - SSH.
 
 O parâmetro de sistema Odoo `eparadise_ui.ros_endpoint`, quando configurado, tem prioridade sobre `EP_ROS_ENDPOINT`.
 

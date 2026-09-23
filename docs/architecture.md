@@ -9,15 +9,21 @@ A UDOO KEY Pro não executa Ubuntu, Odoo ou ROS 2. Ela combina um ESP32-WROVER-E
 ## 2. Topologia do ambiente
 
 ```text
-ASUS X571GT / BIGLinux
+Máquina Odoo
+├── Odoo 16
+├── PostgreSQL 15
+├── backend empresarial
+└── interface de gestão
+
+Máquina ROS
+├── Ubuntu 24.04
 ├── VS Code
-├── Odoo 16 + PostgreSQL 15 (Docker)
-└── VM Ubuntu 24.04
-    ├── ROS 2 Jazzy
-    ├── pacote eparadise_ros
-    └── gateway HTTP :8080
+├── ROS 2 Jazzy
+├── pacote eparadise_ros
+├── gateway HTTP :8080
+└── ferramentas de simulação e depuração
           |
-          | rede bridge: HTTP, MQTT, Wi-Fi ou serial
+          | rede: HTTP, MQTT, Wi-Fi ou serial
           v
       UDOO KEY Pro
       ├── ESP32-WROVER-E
@@ -30,7 +36,7 @@ ASUS X571GT / BIGLinux
           └── comunicacao com o ESP32
 ```
 
-O VS Code permanece no BIGLinux. O desenvolvimento ROS deve usar Remote - SSH para executar terminal, Python, `colcon` e ferramentas ROS dentro da VM.
+O VS Code permanece na máquina ROS. O desenvolvimento ROS usa diretamente o Ubuntu da máquina ROS ou Remote - SSH quando necessário.
 
 ## 3. Responsabilidades
 
@@ -163,22 +169,21 @@ Os pinos GP0 e GP1 participam da comunicação entre ESP32 e RP2040 e não devem
 
 ### Requisitos
 
-- BIGLinux no ASUS X571GT.
-- Docker e Docker Compose no host.
-- VM Ubuntu 24.04 em arquitetura x86_64.
-- 4 vCPUs e 8 GB de RAM alocados inicialmente para a VM.
-- ROS 2 Jazzy instalado na VM.
-- Rede bridge ou outra configuração que permita comunicação entre host, VM e UDOO.
+- Máquina ROS com Ubuntu 24.04, VS Code e ROS 2 Jazzy.
+- Máquina Odoo com Docker e Docker Compose para Odoo/PostgreSQL.
+- CPU/GPU adequados na máquina ROS para desenvolvimento e visualização.
+- Odoo em um host sem necessidade de GPU dedicada, focado em backend e banco.
+- Rede local confiável entre a máquina Odoo e a máquina ROS.
 
-### Odoo no host
+### Odoo na máquina backend
 
-Crie `deployment/.env` no Desktop:
+Crie `deployment/.env` na máquina Odoo:
 
 ```dotenv
-EP_ROS_ENDPOINT=http://IP_DA_VM:8080
+EP_ROS_ENDPOINT=http://IP_DA_MAQUINA_ROS:8080
 ```
 
-Substitua `IP_DA_VM` pelo endereço real da VM. Depois, execute:
+Substitua `IP_DA_MAQUINA_ROS` pelo endereço real da máquina ROS. Depois, execute:
 
 ```bash
 docker compose -f deployment/docker-compose.yml up -d
